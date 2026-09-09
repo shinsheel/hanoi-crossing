@@ -4,7 +4,9 @@ version = "0.1.0"
 description = "Hanoi Crossing game engine"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "pyyaml>=6.0.3",
+]
 
 [project.scripts]
 hanoi-crossing = "hanoi_crossing.main:main"

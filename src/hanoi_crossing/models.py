@@ -1,5 +1,17 @@
 from typing import Optional, List
 from hanoi_crossing.errors import HandIsFullError, IllegalMoveError
+import yaml
+
+
+class _FlowList(list):
+    pass
+
+
+def _represent_flow_list(dumper, data):
+    return dumper.represent_sequence("tag:yaml.org,2002:seq", data, flow_style=True)
+
+
+yaml.add_representer(_FlowList, _represent_flow_list, Dumper=yaml.SafeDumper)
 
 class Disk:
     def __init__(self, size: int):
@@ -63,7 +75,7 @@ class Player:
     
 class Game:
 
-    def __init__(self, max_disks: Optional[int] = 3, players_num: Optional[int] = 2, move_order: Optional[List[int]] = None):
+    def __init__(self, max_disks: Optional[int] = 3, players_num: Optional[int] = 2, move_order: Optional[List[int]] = None, format: Optional[str] = "ascii"):
         self.max_disks = max_disks
         self.players_num = players_num
         self.move_order = move_order if move_order is not None else [i for i in range(players_num)]
@@ -71,7 +83,8 @@ class Game:
         self.current_player_index = self.move_order_curr_cycle.pop(0)
         self.players = [Player([]) for _ in range(players_num)]
         self.biggest_disk_size = max_disks * 2
-
+        self.format = format
+        
         crossing_tower = Tower(max_disks)
         for player in self.players:
             start_tower = Tower(self.max_disks)
@@ -119,11 +132,51 @@ class Game:
 
         return "\n".join(lines)
 
-    def print_ascii_total(self) -> None:
+    def display_ascii_total(self) -> None:
         for player_idx in range(self.players_num):
             self.current_player_index = player_idx
             print(f"Player {player_idx + 1}")
             print(self.display_ascii())
+
+    def _current_player_view(self) -> dict:
+        hand = self.current_player.hand.content
+        return {
+            "player": self.current_player_index,
+            "hand": None if hand is None else hand.size,
+            "towers": {
+                idx+1: _FlowList(disk.size for disk in tower.disks)
+                for idx, tower in enumerate(self.current_player.towers)
+            },
+        }
+
+    def display_yaml(self) -> str:
+        return yaml.safe_dump(self._current_player_view(), sort_keys=False)
+
+    def display_yaml_total(self) -> str:
+        saved = self.current_player_index
+        try:
+            players = []
+            for player_idx in range(self.players_num):
+                self.current_player_index = player_idx
+                players.append(self._current_player_view())
+            winner = next(
+                (idx for idx, player in enumerate(self.players) if player.is_won),
+                None,
+            )
+            return yaml.safe_dump({"players": players, "winner": winner}, sort_keys=False)
+        finally:
+            self.current_player_index = saved
+
+    def display(self) -> str:
+        if self.format == "yaml":
+            return self.display_yaml()
+        return self.display_ascii()
+
+    def display_total(self) -> None:
+        if self.format == "yaml":
+            print(self.display_yaml_total(), end="")
+            return
+        self.display_ascii_total()
 
     def next_turn(self) -> None:
         if not self.move_order_curr_cycle:

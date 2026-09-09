@@ -26,6 +26,12 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
         metavar="SOURCE",
         help="Replay recorded moves",
     )
+    parser.add_argument(
+        "--format",
+        choices=["ascii", "yaml"],
+        default="ascii",
+        help="Output format for board state",
+    )
     return parser.parse_args(argv)
 
 
@@ -33,7 +39,7 @@ def main(args: Optional[List[str]] = None) -> None:
     def play_game(game: Game) -> None:
         while not game.is_over:
             print(f"Player {game.current_player_index + 1}'s turn")
-            print(game.display_ascii())
+            print(game.display())
             input_move = input("Enter your move (from_tower to_tower): ")
             from_tower_raw, to_tower_raw = input_move.split(" ")
             from_idx, to_idx = int(from_tower_raw), int(to_tower_raw)
@@ -45,25 +51,29 @@ def main(args: Optional[List[str]] = None) -> None:
         print(f"Player {game.current_player.index + 1} won!")
 
     def replay_game(game: Game, replay_source: str) -> None:
-        with open(replay_source, "r") as file:
-            for line in file:
-                stripped = line.strip()
-                if not stripped:
-                    continue
-                player_idx, from_tower_idx, to_tower_idx = [int(x) for x in stripped.split(" ")]
-                player = game.players[player_idx]
-                from_tower = player.towers[from_tower_idx]
-                to_tower = player.towers[to_tower_idx]
-                game.move(from_tower, to_tower, player_idx)
-
-        game.print_ascii_total()
+        try:
+            with open(replay_source, "r") as file:
+                for line in file:
+                    stripped = line.strip()
+                    if not stripped:
+                        continue
+                    player_idx, from_tower_idx, to_tower_idx = [int(x) for x in stripped.split(" ")]
+                    player = game.players[player_idx]
+                    from_tower = player.towers[from_tower_idx]
+                    to_tower = player.towers[to_tower_idx]
+                    game.move(from_tower, to_tower, player_idx)
+        except Exception as e:
+            print(f"error: {e}")
+            
+                
+        game.display_total()
         
 
     parsed = parse_args(args)
     order = parsed.order
     replay = parsed.replay
 
-    game = Game(DEFAULT_MAX_DISKS, DEFAULT_PLAYERS_NUM, order)
+    game = Game(DEFAULT_MAX_DISKS, DEFAULT_PLAYERS_NUM, order, format=parsed.format)
     if not replay:
         play_game(game)
     else:

@@ -1,7 +1,10 @@
 # Hand is full error
 class HandIsFullError(Exception):
+    def __str__(self):
+        return "Hand is full"
     pass
 
 # illegal move error
 class IllegalMoveError(Exception):
-    pass
+    def __str__(self):
+        return "Illegal move"
