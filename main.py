@@ -1,4 +1,6 @@
+import argparse
 import sys
+from typing import List, Optional
 
 from models import Game
 
@@ -8,7 +10,26 @@ DEFAULT_PLAYERS_NUM = 2
 DEFAULT_MOVE_ORDER = [0, 1]
 
 
-def main(args: List[str]) -> None:
+def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Hanoi Crossing")
+    parser.add_argument(
+        "--order",
+        nargs="+",
+        type=int,
+        default=None,
+        metavar="PLAYER",
+        help="Turn order as player indices, e.g. --order 0 1 0",
+    )
+    parser.add_argument(
+        "--replay",
+        default=None,
+        metavar="SOURCE",
+        help="Replay recorded moves",
+    )
+    return parser.parse_args(argv)
+
+
+def main(args: Optional[List[str]] = None) -> None:
     def play_game(game: Game) -> None:
         while not game.is_over:
             print(f"Player {game.current_player_index + 1}'s turn")
@@ -19,21 +40,40 @@ def main(args: List[str]) -> None:
             from_tower = game.current_player.towers[from_idx - 1]
             to_tower = game.current_player.towers[to_idx - 1]
             game.move(from_tower, to_tower)
-            game.next_turn()
 
         print("Game over!")
         print(f"Player {game.current_player.index + 1} won!")
 
-    order = DEFAULT_MAX_DISKS
-    if args:
-        order = [int(arg) for arg in args]
-    
+    def replay_game(game: Game, replay_source: str) -> None:
+        with open(replay_source, "r") as file:
+            for line in file:
+                stripped = line.strip()
+                if not stripped:
+                    continue
+                player_idx, from_tower_idx, to_tower_idx = [int(x) for x in stripped.split(" ")]
+                player = game.players[player_idx]
+                from_tower = player.towers[from_tower_idx]
+                to_tower = player.towers[to_tower_idx]
+                game.move(from_tower, to_tower, player_idx)
+
+        game.print_ascii_total()
+        
+
+    parsed = parse_args(args)
+    order = parsed.order
+    replay = parsed.replay
+
     game = Game(DEFAULT_MAX_DISKS, DEFAULT_PLAYERS_NUM, order)
-    play_game(game)
+    if not replay:
+        play_game(game)
+    else:
+        replay_game(game, replay)
 
 
 if __name__ == "__main__":
-    args = sys.argv[1:]
+    params = sys.argv[1:]
+
     print("Welcome to the game of Hanoi!")
     print("The goal is to move all the disks from the start tower to the end tower.")
-    main(args)
+
+    main(params)

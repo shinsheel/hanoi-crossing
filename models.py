@@ -68,6 +68,7 @@ class Game:
         self.players_num = players_num
         self.move_order = move_order if move_order is not None else [i for i in range(players_num)]
         self.move_order_curr_cycle = self.move_order.copy()
+        self.current_player_index = self.move_order_curr_cycle.pop(0)
         self.players = [Player([]) for _ in range(players_num)]
         self.biggest_disk_size = max_disks * 2
 
@@ -83,8 +84,6 @@ class Game:
             for i in range(self.max_disks):
                 size = (self.max_disks - i) * 2 - (1 if player_idx % 2 == 0 else 0)
                 player.towers[0].append(Disk(size))
-
-        self.current_player_index = self.move_order[0]
 
     @property
     def current_player(self) -> Player:
@@ -120,13 +119,20 @@ class Game:
 
         return "\n".join(lines)
 
+    def print_ascii_total(self) -> None:
+        for player_idx in range(self.players_num):
+            self.current_player_index = player_idx
+            print(f"Player {player_idx + 1}")
+            print(self.display_ascii())
+
     def next_turn(self) -> None:
         if not self.move_order_curr_cycle:
             self.move_order_curr_cycle = self.move_order.copy()
         self.current_player_index = self.move_order_curr_cycle.pop(0)
 
-    def move(self, from_tower: Tower, to_tower: Tower) -> None:
-        self.current_player.move(from_tower, to_tower)
+    def move(self, from_tower: Tower, to_tower: Tower, player_idx: Optional[int] = None) -> None:
+        player = self.current_player if player_idx is None else self.players[player_idx]
+        player.move(from_tower, to_tower)
         self.next_turn()
 
     @property
