@@ -1,6 +1,7 @@
+import pytest
 import yaml
 
-from hanoi_crossing import Game
+from hanoi_crossing import Game, IllegalMoveError
 
 
 def test_game_imports_and_starts() -> None:
@@ -17,6 +18,20 @@ def test_yaml_display_includes_player_view() -> None:
     assert view["towers"][0] == [5, 3, 1]
     assert view["towers"][1] == []
     assert view["towers"][2] == []
+
+
+def test_illegal_move_does_not_lose_disk() -> None:
+    game = Game(max_disks=2)
+    player = game.current_player
+    start, shared, _goal = player.towers
+    player.move(start, shared)
+
+    with pytest.raises(IllegalMoveError):
+        player.move(start, shared)
+
+    assert [disk.size for disk in start.disks] == [3]
+    assert [disk.size for disk in shared.disks] == [1]
+    assert player.hand.content is None
 
 
 def test_yaml_total_includes_both_players() -> None:

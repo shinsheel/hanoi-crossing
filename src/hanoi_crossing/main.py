@@ -3,7 +3,7 @@ import sys
 from typing import List, Optional
 
 from hanoi_crossing.models import Game
-
+from hanoi_crossing.errors import IllegalMoveError
 
 DEFAULT_MAX_DISKS = 3
 DEFAULT_PLAYERS_NUM = 2
@@ -45,7 +45,11 @@ def main(args: Optional[List[str]] = None) -> None:
             from_idx, to_idx = int(from_tower_raw), int(to_tower_raw)
             from_tower = game.current_player.towers[from_idx - 1]
             to_tower = game.current_player.towers[to_idx - 1]
-            game.move(from_tower, to_tower)
+            try:
+                game.move(from_tower, to_tower)
+            except IllegalMoveError as e:
+                print(f"error: {e}")
+                continue
 
         print("Game over!")
         print(f"Player {game.current_player.index + 1} won!")

@@ -48,15 +48,16 @@ class Hand:
         self.content = disk
 
     def lift_from_tower(self, tower: Tower) -> None:
+        if self.content is not None:
+            raise HandIsFullError()
         disk = tower.pop()
         self.lift(disk)
 
     def drop_to_tower(self, tower: Tower) -> None:
         if self.content is None:
             raise IllegalMoveError()
-        disk = self.content
+        tower.append(self.content)
         self.content = None
-        tower.append(disk)
 
 class Player:
     def __init__(self, towers: List[Tower]):
@@ -69,7 +70,11 @@ class Player:
 
     def move(self, from_tower: Tower, to_tower: Tower) -> None:
         self.hand.lift_from_tower(from_tower)
-        self.hand.drop_to_tower(to_tower)
+        try:
+            self.hand.drop_to_tower(to_tower)
+        except IllegalMoveError:
+            self.hand.drop_to_tower(from_tower)
+            raise
 
 
     

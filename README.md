@@ -13,15 +13,23 @@ A player wins when their start pole is empty and their goal pole holds all of th
 uv sync
 uv run hanoi-crossing
 uv run hanoi-crossing --order 0 1 0
-uv run hanoi-crossing --replay examples/replay.txt
-uv run hanoi-crossing --replay examples/replay.txt --format yaml
+uv run hanoi-crossing --replay examples/replay_a_wins.txt
+uv run hanoi-crossing --replay examples/replay_a_wins.txt --format yaml
 uv run pytest
 ```
 
 `uv run hanoi-crossing` - random play mode (despite it's name - it's more interactive than 'random')
 `uv run hanoi-crossing --order 0 1 0` - run with given order of moves
-`uv run hanoi-crossing --replay examples/replay.txt` - run replay of pre-recorded game
+`uv run hanoi-crossing --replay examples/replay_a_wins.txt` - run replay of pre-recorded game
 `uv run hanoi-crossing --format yaml` - get results in parse-friendly yaml format
+
+Replay files use `player from to` (0-based poles: start, shared, goal):
+
+- `examples/replay_a_wins.txt` — player A wins
+- `examples/replay_b_wins.txt` — player B wins
+- `examples/replay_b_wins_a_moved.txt` — player B wins after A has moved
+- `examples/replay_in_progress.txt` — mixed board, no winner
+- `examples/replay_illegal.txt` — illegal stack, game stops with an error
 
 
 # AI use
